@@ -1,0 +1,54 @@
+[Symbol(kError)]: Error: connect ECONNREFUSED 172.24.0.2:443
+2025-04-29 17:04:25       at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+2025-04-29 17:04:25     errno: -111,
+2025-04-29 17:04:25     code: 'ECONNREFUSED',
+2025-04-29 17:04:25     syscall: 'connect',
+2025-04-29 17:04:25     address: '172.24.0.2',
+2025-04-29 17:04:25     port: 443
+2025-04-29 17:04:25   },
+2025-04-29 17:04:25   [Symbol(kMessage)]: 'connect ECONNREFUSED 172.24.0.2:443'
+2025-04-29 17:04:25 }
+2025-04-29 17:05:51 Error details: ErrorEvent {
+2025-04-29 17:05:51   [Symbol(kTarget)]: WebSocket {
+2025-04-29 17:05:51     _events: [Object: null prototype] {
+2025-04-29 17:05:51       error: [Function],
+2025-04-29 17:05:51       message: [Function],
+2025-04-29 17:05:51       close: [Function],
+2025-04-29 17:05:51       open: [Function]
+2025-04-29 17:05:51     },
+2025-04-29 17:05:51     _eventsCount: 4,
+2025-04-29 17:05:51     _maxListeners: undefined,
+2025-04-29 17:05:51     _binaryType: 'arraybuffer',
+2025-04-29 17:05:51     _closeCode: 1006,
+2025-04-29 17:05:51     _closeFrameReceived: false,
+2025-04-29 17:05:51     _closeFrameSent: false,
+2025-04-29 17:05:51     _closeMessage: <Buffer >,
+2025-04-29 17:05:51     _closeTimer: null,
+2025-04-29 17:05:51     _errorEmitted: true,
+2025-04-29 17:05:51     _extensions: {},
+2025-04-29 17:05:51     _paused: false,
+2025-04-29 17:05:51     _protocol: '',
+2025-04-29 17:05:51     _readyState: 3,
+2025-04-29 17:05:51     _receiver: null,
+2025-04-29 17:05:51     _sender: null,
+2025-04-29 17:05:51     _socket: null,
+2025-04-29 17:05:51     _bufferedAmount: 0,
+2025-04-29 17:05:51     _isServer: false,
+2025-04-29 17:05:51     _redirects: 0,
+2025-04-29 17:05:51     _autoPong: true,
+2025-04-29 17:05:51     _url: 'wss://db/v2',
+2025-04-29 17:05:51     _req: null,
+2025-04-29 17:05:51     [Symbol(shapeMode)]: false,
+2025-04-29 17:05:51     [Symbol(kCapture)]: false
+2025-04-29 17:05:51   },
+2025-04-29 17:05:51   [Symbol(kType)]: 'error',
+2025-04-29 17:05:51   [Symbol(kError)]: Error: connect ECONNREFUSED 172.24.0.2:443
+2025-04-29 17:05:51       at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+2025-04-29 17:05:51     errno: -111,
+2025-04-29 17:05:51     code: 'ECONNREFUSED',
+2025-04-29 17:05:51     syscall: 'connect',
+2025-04-29 17:05:51     address: '172.24.0.2',
+2025-04-29 17:05:51     port: 443
+2025-04-29 17:05:51   },
+2025-04-29 17:05:51   [Symbol(kMessage)]: 'connect ECONNREFUSED 172.24.0.2:443'
+2025-04-29 17:05:51 }
