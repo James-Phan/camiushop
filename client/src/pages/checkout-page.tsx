@@ -119,6 +119,9 @@ export default function CheckoutPage() {
         description: "Thank you for your purchase.",
       });
       
+      // Set confirmation flag in session storage
+      sessionStorage.setItem('fromCheckout', 'true');
+      
       navigate("/confirmation");
     },
     onError: (error: Error) => {

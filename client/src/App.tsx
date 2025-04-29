@@ -10,6 +10,7 @@ import ProductsPage from "@/pages/products-page";
 import ProductDetailPage from "@/pages/product-detail-page";
 import CartPage from "@/pages/cart-page";
 import CheckoutPage from "@/pages/checkout-page";
+import ConfirmationPage from "@/pages/confirmation-page";
 import AuthPage from "@/pages/auth-page";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/products/:id" component={ProductDetailPage} />
       <Route path="/cart" component={CartPage} />
       <ProtectedRoute path="/checkout" component={CheckoutPage} />
+      <Route path="/confirmation" component={ConfirmationPage} />
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/admin" component={AdminDashboard} admin />
       <ProtectedRoute path="/admin/products" component={AdminProducts} admin />
