@@ -1,5 +1,5 @@
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
 import { 
   User, InsertUser, users, 
   Product, InsertProduct, products,
@@ -9,8 +9,10 @@ import {
   Order, InsertOrder, orders,
   OrderItem, InsertOrderItem, orderItems,
 } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
+import { db, pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User methods
@@ -62,264 +64,201 @@ export interface IStorage {
   createOrderItem(item: InsertOrderItem): Promise<OrderItem>;
   
   // Session store for authentication
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 }
 
-export class MemStorage implements IStorage {
-  private usersMap: Map<number, User>;
-  private categoriesMap: Map<number, Category>;
-  private productsMap: Map<number, Product>;
-  private reviewsMap: Map<number, Review>;
-  private cartItemsMap: Map<number, CartItem>;
-  private ordersMap: Map<number, Order>;
-  private orderItemsMap: Map<number, OrderItem>;
-
-  userIdCounter: number;
-  categoryIdCounter: number;
-  productIdCounter: number;
-  reviewIdCounter: number;
-  cartItemIdCounter: number;
-  orderIdCounter: number;
-  orderItemIdCounter: number;
-  sessionStore: session.SessionStore;
+export class DatabaseStorage implements IStorage {
+  sessionStore: any;
 
   constructor() {
-    this.usersMap = new Map();
-    this.categoriesMap = new Map();
-    this.productsMap = new Map();
-    this.reviewsMap = new Map();
-    this.cartItemsMap = new Map();
-    this.ordersMap = new Map();
-    this.orderItemsMap = new Map();
-
-    this.userIdCounter = 1;
-    this.categoryIdCounter = 1;
-    this.productIdCounter = 1;
-    this.reviewIdCounter = 1;
-    this.cartItemIdCounter = 1;
-    this.orderIdCounter = 1;
-    this.orderItemIdCounter = 1;
-
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // 24 hours
+    this.sessionStore = new PostgresSessionStore({ 
+      pool,
+      createTableIfMissing: true
     });
-
-    // Initialize with sample data for development
-    this.initSampleData();
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.usersMap.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.usersMap.values()).find(
-      (user) => user.username === username
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.usersMap.values()).find(
-      (user) => user.email === email
-    );
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
   async createUser(userData: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const now = new Date();
-    const user: User = { ...userData, id, createdAt: now };
-    this.usersMap.set(id, user);
+    const [user] = await db.insert(users).values(userData).returning();
     return user;
   }
 
   // Category methods
   async getCategories(): Promise<Category[]> {
-    return Array.from(this.categoriesMap.values());
+    return await db.select().from(categories);
   }
 
   async getCategory(id: number): Promise<Category | undefined> {
-    return this.categoriesMap.get(id);
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category;
   }
 
   async createCategory(categoryData: InsertCategory): Promise<Category> {
-    const id = this.categoryIdCounter++;
-    const category: Category = { ...categoryData, id };
-    this.categoriesMap.set(id, category);
+    const [category] = await db.insert(categories).values(categoryData).returning();
     return category;
   }
 
   async updateCategory(id: number, categoryData: Partial<InsertCategory>): Promise<Category | undefined> {
-    const category = this.categoriesMap.get(id);
-    if (!category) return undefined;
-
-    const updatedCategory = { ...category, ...categoryData };
-    this.categoriesMap.set(id, updatedCategory);
+    const [updatedCategory] = await db
+      .update(categories)
+      .set(categoryData)
+      .where(eq(categories.id, id))
+      .returning();
     return updatedCategory;
   }
 
   async deleteCategory(id: number): Promise<boolean> {
-    return this.categoriesMap.delete(id);
+    const result = await db.delete(categories).where(eq(categories.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Product methods
   async getProducts(): Promise<Product[]> {
-    return Array.from(this.productsMap.values());
+    return await db.select().from(products);
   }
 
   async getProductsByCategory(categoryId: number): Promise<Product[]> {
-    return Array.from(this.productsMap.values()).filter(
-      (product) => product.categoryId === categoryId
-    );
+    return await db.select().from(products).where(eq(products.categoryId, categoryId));
   }
 
   async getFeaturedProducts(): Promise<Product[]> {
-    return Array.from(this.productsMap.values()).filter(
-      (product) => product.featured
-    );
+    return await db.select().from(products).where(eq(products.featured, true));
   }
 
   async getNewProducts(): Promise<Product[]> {
-    return Array.from(this.productsMap.values()).filter(
-      (product) => product.new
-    );
+    return await db.select().from(products).where(eq(products.new, true));
   }
 
   async getBestsellerProducts(): Promise<Product[]> {
-    return Array.from(this.productsMap.values()).filter(
-      (product) => product.bestseller
-    );
+    return await db.select().from(products).where(eq(products.bestseller, true));
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
-    return this.productsMap.get(id);
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product;
   }
 
   async createProduct(productData: InsertProduct): Promise<Product> {
-    const id = this.productIdCounter++;
-    const now = new Date();
-    const product: Product = { ...productData, id, createdAt: now };
-    this.productsMap.set(id, product);
+    const [product] = await db.insert(products).values(productData).returning();
     return product;
   }
 
   async updateProduct(id: number, productData: Partial<InsertProduct>): Promise<Product | undefined> {
-    const product = this.productsMap.get(id);
-    if (!product) return undefined;
-
-    const updatedProduct = { ...product, ...productData };
-    this.productsMap.set(id, updatedProduct);
+    const [updatedProduct] = await db
+      .update(products)
+      .set(productData)
+      .where(eq(products.id, id))
+      .returning();
     return updatedProduct;
   }
 
   async deleteProduct(id: number): Promise<boolean> {
-    return this.productsMap.delete(id);
+    const result = await db.delete(products).where(eq(products.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Reviews methods
   async getReviews(productId: number): Promise<Review[]> {
-    return Array.from(this.reviewsMap.values()).filter(
-      (review) => review.productId === productId
-    );
+    return await db.select().from(reviews).where(eq(reviews.productId, productId));
   }
 
   async createReview(reviewData: InsertReview): Promise<Review> {
-    const id = this.reviewIdCounter++;
-    const now = new Date();
-    const review: Review = { ...reviewData, id, createdAt: now };
-    this.reviewsMap.set(id, review);
+    const [review] = await db.insert(reviews).values(reviewData).returning();
     return review;
   }
 
   // Cart methods
   async getCartItems(userId: number): Promise<CartItem[]> {
-    return Array.from(this.cartItemsMap.values()).filter(
-      (item) => item.userId === userId
-    );
+    return await db.select().from(cartItems).where(eq(cartItems.userId, userId));
   }
 
   async getCartItem(id: number): Promise<CartItem | undefined> {
-    return this.cartItemsMap.get(id);
+    const [cartItem] = await db.select().from(cartItems).where(eq(cartItems.id, id));
+    return cartItem;
   }
 
   async getCartItemByProductAndUser(userId: number, productId: number): Promise<CartItem | undefined> {
-    return Array.from(this.cartItemsMap.values()).find(
-      (item) => item.userId === userId && item.productId === productId
-    );
+    const [cartItem] = await db
+      .select()
+      .from(cartItems)
+      .where(and(eq(cartItems.userId, userId), eq(cartItems.productId, productId)));
+    return cartItem;
   }
 
   async createCartItem(itemData: InsertCartItem): Promise<CartItem> {
-    const id = this.cartItemIdCounter++;
-    const now = new Date();
-    const cartItem: CartItem = { ...itemData, id, createdAt: now };
-    this.cartItemsMap.set(id, cartItem);
+    const [cartItem] = await db.insert(cartItems).values(itemData).returning();
     return cartItem;
   }
 
   async updateCartItem(id: number, itemData: Partial<InsertCartItem>): Promise<CartItem | undefined> {
-    const cartItem = this.cartItemsMap.get(id);
-    if (!cartItem) return undefined;
-
-    const updatedCartItem = { ...cartItem, ...itemData };
-    this.cartItemsMap.set(id, updatedCartItem);
+    const [updatedCartItem] = await db
+      .update(cartItems)
+      .set(itemData)
+      .where(eq(cartItems.id, id))
+      .returning();
     return updatedCartItem;
   }
 
   async deleteCartItem(id: number): Promise<boolean> {
-    return this.cartItemsMap.delete(id);
+    const result = await db.delete(cartItems).where(eq(cartItems.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async clearCart(userId: number): Promise<boolean> {
-    const cartItems = await this.getCartItems(userId);
-    cartItems.forEach(item => {
-      this.cartItemsMap.delete(item.id);
-    });
-    return true;
+    const result = await db.delete(cartItems).where(eq(cartItems.userId, userId));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Order methods
   async getOrders(userId: number): Promise<Order[]> {
-    return Array.from(this.ordersMap.values()).filter(
-      (order) => order.userId === userId
-    );
+    return await db.select().from(orders).where(eq(orders.userId, userId));
   }
 
   async getAllOrders(): Promise<Order[]> {
-    return Array.from(this.ordersMap.values());
+    return await db.select().from(orders);
   }
 
   async getOrder(id: number): Promise<Order | undefined> {
-    return this.ordersMap.get(id);
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
   }
 
   async createOrder(orderData: InsertOrder): Promise<Order> {
-    const id = this.orderIdCounter++;
-    const now = new Date();
-    const order: Order = { ...orderData, id, createdAt: now };
-    this.ordersMap.set(id, order);
+    const [order] = await db.insert(orders).values(orderData).returning();
     return order;
   }
 
   async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
-    const order = this.ordersMap.get(id);
-    if (!order) return undefined;
-
-    const updatedOrder = { ...order, status };
-    this.ordersMap.set(id, updatedOrder);
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, id))
+      .returning();
     return updatedOrder;
   }
 
   // Order items methods
   async getOrderItems(orderId: number): Promise<OrderItem[]> {
-    return Array.from(this.orderItemsMap.values()).filter(
-      (item) => item.orderId === orderId
-    );
+    return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   }
 
   async createOrderItem(itemData: InsertOrderItem): Promise<OrderItem> {
-    const id = this.orderItemIdCounter++;
-    const orderItem: OrderItem = { ...itemData, id };
-    this.orderItemsMap.set(id, orderItem);
+    const [orderItem] = await db.insert(orderItems).values(itemData).returning();
     return orderItem;
   }
 
@@ -435,4 +374,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
