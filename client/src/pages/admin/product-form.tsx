@@ -72,12 +72,14 @@ export default function ProductForm() {
   const { data: product, isLoading: isLoadingProduct } = useQuery<ProductWithDetails>({
     queryKey: [`/api/products/${id}`],
     enabled: isEditMode,
-    onSuccess: (data) => {
-      if (data.images && data.images.length > 0) {
-        setAdditionalImages(data.images);
-      }
-    }
   });
+  
+  // Set additional images when product data is fetched
+  useEffect(() => {
+    if (product?.images && product.images.length > 0) {
+      setAdditionalImages(product.images);
+    }
+  }, [product]);
   
   // Initialize form
   const form = useForm<ProductFormValues>({
@@ -89,7 +91,7 @@ export default function ProductForm() {
       salePrice: null,
       image: "",
       images: [],
-      categoryId: 0,
+      categoryId: undefined,
       stock: 0,
       featured: false,
       new: false,
@@ -289,8 +291,8 @@ export default function ProductForm() {
                           <FormLabel>Category*</FormLabel>
                           <Select 
                             onValueChange={field.onChange} 
-                            defaultValue={field.value.toString()}
-                            value={field.value.toString()}
+                            defaultValue={field.value ? field.value.toString() : undefined}
+                            value={field.value ? field.value.toString() : undefined}
                           >
                             <FormControl>
                               <SelectTrigger>
