@@ -11,8 +11,18 @@ import {
 } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { db, pool } from "./db";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
 
 const PostgresSessionStore = connectPg(session);
+const scryptAsync = promisify(scrypt);
+
+// Password hashing function
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 export interface IStorage {
   // User methods
@@ -378,10 +388,11 @@ export class DatabaseStorage implements IStorage {
       await this.createProduct(productData);
     }
 
-    // Create admin user
+    // Create admin user with a properly formatted password using our hashPassword function
+    const adminPass = await hashPassword('admin123');
     await this.createUser({
       username: 'admin',
-      password: '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', // password is "secret"
+      password: adminPass,
       email: 'admin@camiu.com',
       isAdmin: true
     });
