@@ -55,6 +55,11 @@ docker run -p 5000:5000 -e DATABASE_URL=your_database_url -e SESSION_SECRET=your
 - `SESSION_SECRET`: Chuỗi bí mật được sử dụng để mã hóa phiên (session)
 - `NODE_ENV`: Môi trường chạy ứng dụng (development, production)
 
+## Lưu ý quan trọng
+
+- PostgreSQL được cấu hình chạy trên cổng **5433** thay vì cổng mặc định 5432 để tránh xung đột với PostgreSQL đã cài đặt trên máy local.
+- Sử dụng driver PostgreSQL tiêu chuẩn (pg) thay vì Neon Database để kết nối.
+
 ## Kết nối với PostgreSQL
 
 PostgreSQL đã được cấu hình để cho phép kết nối từ bên ngoài container. Bạn có thể sử dụng các công cụ như pgAdmin, DBeaver hoặc bất kỳ công cụ quản lý PostgreSQL nào khác để kết nối trực tiếp với cơ sở dữ liệu:
