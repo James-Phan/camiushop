@@ -107,7 +107,7 @@ export default function AdminOrders() {
     ? orders
         .filter((order) => {
           const matchesSearch = order.id.toString().includes(searchTerm);
-          const matchesStatus = statusFilter ? order.status === statusFilter : true;
+          const matchesStatus = statusFilter && statusFilter !== "all" ? order.status === statusFilter : true;
           return matchesSearch && matchesStatus;
         })
         .sort((a, b) => {
