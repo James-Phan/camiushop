@@ -60,12 +60,12 @@ docker run -p 5000:5000 -e DATABASE_URL=your_database_url -e SESSION_SECRET=your
 PostgreSQL đã được cấu hình để cho phép kết nối từ bên ngoài container. Bạn có thể sử dụng các công cụ như pgAdmin, DBeaver hoặc bất kỳ công cụ quản lý PostgreSQL nào khác để kết nối trực tiếp với cơ sở dữ liệu:
 
 - **Host**: localhost (hoặc IP máy chủ nếu triển khai từ xa)
-- **Port**: 5432
+- **Port**: 5433
 - **Database**: camiudb
 - **Username**: postgres
 - **Password**: postgres
 
-Ví dụ về chuỗi kết nối: `postgres://postgres:postgres@localhost:5432/camiudb`
+Ví dụ về chuỗi kết nối: `postgres://postgres:postgres@localhost:5433/camiudb`
 
 ## Tài khoản mặc định
 
