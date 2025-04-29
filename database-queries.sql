@@ -2,7 +2,7 @@
 -- và dành cho mục đích tham khảo/debug
 
 -- Kết nối với PostgreSQL
--- psql -h localhost -p 5432 -U postgres -d camiudb
+-- psql -h localhost -p 5433 -U postgres -d camiudb
 
 -- Liệt kê tất cả bảng trong schema public
 SELECT table_name 
