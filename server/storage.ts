@@ -75,6 +75,11 @@ export class DatabaseStorage implements IStorage {
       pool,
       createTableIfMissing: true
     });
+    
+    // Initialize sample data if needed
+    this.initSampleData().catch(error => {
+      console.error("Failed to initialize sample data:", error);
+    });
   }
 
   // User methods
@@ -264,6 +269,15 @@ export class DatabaseStorage implements IStorage {
 
   // Initialize sample data for development
   private async initSampleData() {
+    // Check if data already exists
+    const existingCategories = await this.getCategories();
+    if (existingCategories.length > 0) {
+      console.log("Sample data already initialized, skipping.");
+      return;
+    }
+    
+    console.log("Initializing sample data...");
+    
     // Create categories
     const categoriesData: InsertCategory[] = [
       { name: 'Skincare', description: 'Skincare products for all skin types', image: 'https://images.unsplash.com/photo-1567721913486-6585f069b332?auto=format&fit=crop&w=400&h=400' },

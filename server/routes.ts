@@ -39,7 +39,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const categories = await storage.getCategories();
       res.json(categories);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching categories", error });
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ message: "Error fetching categories", error: error.toString() });
     }
   });
 
@@ -113,7 +114,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(products);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching products", error });
+      console.error("Error fetching products:", error);
+      res.status(500).json({ message: "Error fetching products", error: error.toString() });
     }
   });
 
