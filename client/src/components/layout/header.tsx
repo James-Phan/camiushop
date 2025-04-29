@@ -41,7 +41,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+      <header className="bg-white dark:bg-gray-900 shadow-sm fixed top-0 left-0 right-0 z-50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-4">
             {/* Logo */}
@@ -65,7 +65,7 @@ export default function Header() {
                 >
                   Products <ChevronDown className="ml-1 h-4 w-4" />
                 </Link>
-                <div className="absolute z-10 left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                <div className="absolute z-10 left-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
                   <div className="py-1" role="menu" aria-orientation="vertical">
                     <Link href="/products?category=1" className="block px-4 py-2 text-sm text-foreground hover:bg-light hover:text-primary" role="menuitem">Skincare</Link>
                     <Link href="/products?category=2" className="block px-4 py-2 text-sm text-foreground hover:bg-light hover:text-primary" role="menuitem">Makeup</Link>
@@ -97,6 +97,22 @@ export default function Header() {
                 className="text-foreground hover:text-primary transition"
               >
                 <Search className="h-5 w-5" />
+              </Button>
+
+              {/* Theme Toggle Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="text-foreground hover:text-primary transition"
+              >
+                {mounted && (
+                  theme === "dark" ? (
+                    <Sun className="h-5 w-5" />
+                  ) : (
+                    <Moon className="h-5 w-5" />
+                  )
+                )}
               </Button>
 
               <div className="relative">
@@ -195,7 +211,7 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-white">
+          <div className="md:hidden bg-white dark:bg-gray-900">
             <nav className="flex flex-col px-4 py-2">
               <Link 
                 href="/" 
@@ -257,7 +273,7 @@ export default function Header() {
               >
                 Contact
               </Link>
-              <div className="border-t border-gray-200 mt-2 pt-2">
+              <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
                 {user ? (
                   <>
                     {user.isAdmin && (
