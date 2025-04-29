@@ -55,6 +55,18 @@ docker run -p 5000:5000 -e DATABASE_URL=your_database_url -e SESSION_SECRET=your
 - `SESSION_SECRET`: Chuỗi bí mật được sử dụng để mã hóa phiên (session)
 - `NODE_ENV`: Môi trường chạy ứng dụng (development, production)
 
+## Kết nối với PostgreSQL
+
+PostgreSQL đã được cấu hình để cho phép kết nối từ bên ngoài container. Bạn có thể sử dụng các công cụ như pgAdmin, DBeaver hoặc bất kỳ công cụ quản lý PostgreSQL nào khác để kết nối trực tiếp với cơ sở dữ liệu:
+
+- **Host**: localhost (hoặc IP máy chủ nếu triển khai từ xa)
+- **Port**: 5432
+- **Database**: camiudb
+- **Username**: postgres
+- **Password**: postgres
+
+Ví dụ về chuỗi kết nối: `postgres://postgres:postgres@localhost:5432/camiudb`
+
 ## Tài khoản mặc định
 
 - Admin: 
