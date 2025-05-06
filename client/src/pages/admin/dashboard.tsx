@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -60,7 +60,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminDashboard() {
-  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  
+  // States for order details modal
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
+  const [isStatusUpdateOpen, setIsStatusUpdateOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState<string>("");
   
   // Fetch data for dashboard
   const { data: orders } = useQuery<Order[]>({
@@ -75,9 +81,69 @@ export default function AdminDashboard() {
     queryKey: ["/api/categories"],
   });
   
+  // Update order status mutation
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/orders/${id}/status`, { status });
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Order updated",
+        description: "The order status has been successfully updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      setIsStatusUpdateOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update order status: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Function to handle viewing order details
   const handleViewOrder = (orderId: number) => {
-    setLocation(`/admin/orders?id=${orderId}`);
+    const order = orders?.find(o => o.id === orderId);
+    if (order) {
+      setSelectedOrder(order);
+      setIsOrderDetailsOpen(true);
+    }
+  };
+  
+  const handleOpenStatusUpdate = (order: Order) => {
+    setSelectedOrder(order);
+    setNewStatus(order.status);
+    setIsStatusUpdateOpen(true);
+  };
+
+  const handleUpdateStatus = () => {
+    if (selectedOrder && newStatus) {
+      updateOrderStatusMutation.mutate({
+        id: selectedOrder.id,
+        status: newStatus,
+      });
+    }
+  };
+  
+  // Get status badge color
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "processing":
+        return "bg-blue-100 text-blue-800";
+      case "shipped":
+        return "bg-purple-100 text-purple-800";
+      case "delivered":
+        return "bg-green-100 text-green-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   // Calculate dashboard metrics
@@ -351,6 +417,202 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Order Details Dialog */}
+        <Dialog open={isOrderDetailsOpen} onOpenChange={setIsOrderDetailsOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Order Details</DialogTitle>
+              <DialogDescription>
+                {selectedOrder ? `Order #${selectedOrder.id} Details` : "Loading order details..."}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedOrder && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Order Information</h3>
+                    <div className="bg-muted p-3 rounded-md">
+                      <p className="mb-1"><span className="font-medium">Order ID:</span> #{selectedOrder.id}</p>
+                      <p className="mb-1"><span className="font-medium">Date:</span> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                      <p className="mb-1">
+                        <span className="font-medium">Status:</span>{" "}
+                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(selectedOrder.status)}`}>
+                          {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                        </span>
+                      </p>
+                      <p className="mb-1"><span className="font-medium">Payment Method:</span> {selectedOrder.paymentMethod}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Shipping Address</h3>
+                    <div className="bg-muted p-3 rounded-md">
+                      <p className="mb-1">{selectedOrder.shippingAddress.fullName}</p>
+                      <p className="mb-1">{selectedOrder.shippingAddress.addressLine1}</p>
+                      {selectedOrder.shippingAddress.addressLine2 && <p className="mb-1">{selectedOrder.shippingAddress.addressLine2}</p>}
+                      <p className="mb-1">{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}</p>
+                      <p className="mb-1">{selectedOrder.shippingAddress.country}</p>
+                      <p>{selectedOrder.shippingAddress.phone}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Order Items</h3>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[80px]">Image</TableHead>
+                          <TableHead>Product</TableHead>
+                          <TableHead>Variant</TableHead>
+                          <TableHead>Quantity</TableHead>
+                          <TableHead>Price</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedOrder.items?.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              {item.product && (
+                                <img
+                                  src={item.product.image}
+                                  alt={item.product.name}
+                                  className="w-12 h-12 object-cover rounded-md"
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {item.product?.name || `Product ID: ${item.productId}`}
+                            </TableCell>
+                            <TableCell>{item.variant || "Standard"}</TableCell>
+                            <TableCell>{item.quantity}</TableCell>
+                            <TableCell>${item.price.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">
+                              ${(item.price * item.quantity).toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center p-4 bg-muted rounded-md">
+                  <div className="text-muted-foreground">Total Amount:</div>
+                  <div className="font-poppins font-semibold text-lg">
+                    ${selectedOrder.total.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsOrderDetailsOpen(false)}
+              >
+                Close
+              </Button>
+              <Button onClick={() => {
+                setIsOrderDetailsOpen(false);
+                if (selectedOrder) {
+                  handleOpenStatusUpdate(selectedOrder);
+                }
+              }}>
+                Update Status
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Update Status Dialog */}
+        <Dialog open={isStatusUpdateOpen} onOpenChange={setIsStatusUpdateOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Update Order Status</DialogTitle>
+              <DialogDescription>
+                {selectedOrder
+                  ? `Change the status for Order #${selectedOrder.id}`
+                  : "Select a new status for this order"}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Current Status:</label>
+                <div>
+                  {selectedOrder && (
+                    <span 
+                      className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(selectedOrder.status)}`}
+                    >
+                      {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">New Status:</label>
+                <Select value={newStatus} onValueChange={setNewStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                        Pending
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="processing">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                        Processing
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="shipped">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                        Shipped
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="delivered">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                        Delivered
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="cancelled">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                        Cancelled
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsStatusUpdateOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUpdateStatus}
+                disabled={updateOrderStatusMutation.isPending}
+              >
+                {updateOrderStatusMutation.isPending ? "Updating..." : "Update Status"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );
