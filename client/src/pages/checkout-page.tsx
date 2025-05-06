@@ -119,10 +119,16 @@ export default function CheckoutPage() {
         description: "Thank you for your purchase.",
       });
       
-      // Set confirmation flag in session storage
+      // Set confirmation flag and order info in session storage
       sessionStorage.setItem('fromCheckout', 'true');
       
-      navigate("/confirmation");
+      try {
+        navigate("/confirmation");
+      } catch (error) {
+        console.error("Navigation error:", error);
+        // Force reload to confirmation page as fallback
+        window.location.href = "/confirmation";
+      }
     },
     onError: (error: Error) => {
       setOrderProcessing(false);

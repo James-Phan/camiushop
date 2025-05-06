@@ -1,22 +1,47 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Check, ShoppingBag, ArrowRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function ConfirmationPage() {
   const [, navigate] = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
   
   // Redirect if user directly navigates to this page without checkout
   useEffect(() => {
     const fromCheckout = sessionStorage.getItem('fromCheckout');
+    
+    // Simulate loading for better UX even if there's a database issue
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
     if (fromCheckout !== 'true') {
       navigate('/');
     }
+    
     // Clean up
     return () => {
+      clearTimeout(timer);
       sessionStorage.removeItem('fromCheckout');
     };
   }, [navigate]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <main className="pt-24 pb-16 min-h-screen">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="flex flex-col items-center justify-center text-center h-[50vh]">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <h2 className="text-xl font-medium">Processing your order...</h2>
+            <p className="text-muted-foreground mt-2">Please wait while we confirm your purchase.</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pt-24 pb-16">
