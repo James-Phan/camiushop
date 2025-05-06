@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -30,21 +30,28 @@ import {
   PieChart as PieChartIcon,
   Eye,
 } from "lucide-react";
-import { Order, Product, Category } from "@/lib/types";
+import { Order, ProductWithDetails, Category } from "@/lib/types";
 
 export default function AdminDashboard() {
+  const [, setLocation] = useLocation();
+  
   // Fetch data for dashboard
   const { data: orders } = useQuery<Order[]>({
     queryKey: ["/api/admin/orders"],
   });
 
-  const { data: products } = useQuery<Product[]>({
+  const { data: products } = useQuery<ProductWithDetails[]>({
     queryKey: ["/api/products"],
   });
 
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
+  
+  // Function to handle viewing order details
+  const handleViewOrder = (orderId: number) => {
+    setLocation(`/admin/orders?id=${orderId}`);
+  };
 
   // Calculate dashboard metrics
   const totalOrders = orders?.length || 0;
@@ -260,10 +267,12 @@ export default function AdminDashboard() {
                           </span>
                         </div>
                       </div>
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/admin/orders/${order.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </Link>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleViewOrder(order.id)}
+                      >
+                        <Eye className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
