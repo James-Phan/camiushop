@@ -128,7 +128,10 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const user: User = {
       id: this.userIdCounter++,
-      ...userData,
+      username: userData.username,
+      email: userData.email,
+      password: userData.password,
+      isAdmin: userData.isAdmin ?? false,
       createdAt: now
     };
     this.users.push(user);
@@ -148,8 +151,9 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const category: Category = {
       id: this.categoryIdCounter++,
-      ...categoryData,
-      createdAt: now
+      name: categoryData.name,
+      description: categoryData.description,
+      image: categoryData.image
     };
     this.categories.push(category);
     return category;
@@ -202,7 +206,17 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const product: Product = {
       id: this.productIdCounter++,
-      ...productData,
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      salePrice: productData.salePrice ?? null,
+      image: productData.image,
+      images: productData.images || null,
+      categoryId: productData.categoryId,
+      stock: productData.stock ?? 0,
+      featured: productData.featured ?? false,
+      new: productData.new ?? false,
+      bestseller: productData.bestseller ?? false,
       createdAt: now
     };
     this.products.push(product);
@@ -260,7 +274,10 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const cartItem: CartItem = {
       id: this.cartItemIdCounter++,
-      ...itemData,
+      userId: itemData.userId,
+      productId: itemData.productId,
+      quantity: itemData.quantity ?? 1,
+      variant: itemData.variant ?? null,
       createdAt: now
     };
     this.cartItems.push(cartItem);
@@ -308,7 +325,11 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const order: Order = {
       id: this.orderIdCounter++,
-      ...orderData,
+      userId: orderData.userId,
+      total: orderData.total,
+      status: orderData.status ?? "pending",
+      shippingAddress: orderData.shippingAddress,
+      paymentMethod: orderData.paymentMethod,
       createdAt: now
     };
     this.orders.push(order);
@@ -333,11 +354,13 @@ export class MemStorage implements IStorage {
   }
 
   async createOrderItem(itemData: InsertOrderItem): Promise<OrderItem> {
-    const now = new Date().toISOString();
     const orderItem: OrderItem = {
       id: this.orderItemIdCounter++,
-      ...itemData,
-      createdAt: now
+      orderId: itemData.orderId,
+      productId: itemData.productId,
+      quantity: itemData.quantity,
+      price: itemData.price,
+      variant: itemData.variant ?? null
     };
     this.orderItems.push(orderItem);
     return orderItem;
