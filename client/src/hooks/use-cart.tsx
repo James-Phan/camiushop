@@ -49,6 +49,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       quantity: number;
       variant?: string;
     }) => {
+      if (!user) {
+        throw new Error("You need to log in to add items to your cart");
+      }
+      
       const res = await apiRequest("POST", "/api/cart", {
         productId,
         quantity,
@@ -80,6 +84,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       id: number;
       quantity: number;
     }) => {
+      if (!user) {
+        throw new Error("You need to log in to update items in your cart");
+      }
+      
       const res = await apiRequest("PUT", `/api/cart/${id}`, { quantity });
       return await res.json();
     },
@@ -97,6 +105,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const removeFromCartMutation = useMutation({
     mutationFn: async (id: number) => {
+      if (!user) {
+        throw new Error("You need to log in to remove items from your cart");
+      }
+      
       await apiRequest("DELETE", `/api/cart/${id}`);
     },
     onSuccess: () => {
@@ -117,6 +129,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCartMutation = useMutation({
     mutationFn: async () => {
+      if (!user) {
+        throw new Error("You need to log in to clear your cart");
+      }
+      
       await apiRequest("DELETE", "/api/cart");
     },
     onSuccess: () => {
